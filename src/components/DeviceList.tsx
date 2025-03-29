@@ -67,14 +67,14 @@ const DeviceList = () => {
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 justify-between">
-        <div className="flex items-center w-full max-w-md">
+        <div className="flex items-center w-full max-w-md relative">
           <Input
             placeholder="Search devices..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full"
-            icon={<Search className="h-4 w-4" />}
+            className="w-full pl-10" // Added padding to make room for the icon
           />
+          <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
         </div>
         <Button
           variant="outline"
