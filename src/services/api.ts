@@ -222,111 +222,260 @@ const mockServerStatus: ServerStatus = {
 
 // API Class
 class API {
+  private apiUrl: string;
+  private useMockData: boolean;
+
+  constructor() {
+    // Check if we should use the real backend or mock data
+    this.useMockData = process.env.NODE_ENV === 'development' && !process.env.REACT_APP_API_URL;
+    this.apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+  }
+
   // Devices
   async getDevices(): Promise<Device[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(mockDevices), 500);
-    });
+    if (this.useMockData) {
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(mockDevices), 500);
+      });
+    }
+
+    const response = await fetch(`${this.apiUrl}/devices`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch devices');
+    }
+    return response.json();
   }
 
   async getDevice(id: string): Promise<Device | undefined> {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(mockDevices.find(d => d.id === id)), 500);
-    });
+    if (this.useMockData) {
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(mockDevices.find(d => d.id === id)), 500);
+      });
+    }
+
+    const response = await fetch(`${this.apiUrl}/devices/${id}`);
+    if (!response.ok) {
+      if (response.status === 404) {
+        return undefined;
+      }
+      throw new Error('Failed to fetch device');
+    }
+    return response.json();
   }
 
   async startBackup(deviceId: string): Promise<Backup> {
-    const device = mockDevices.find(d => d.id === deviceId);
-    if (!device) {
-      throw new Error('Device not found');
+    if (this.useMockData) {
+      const device = mockDevices.find(d => d.id === deviceId);
+      if (!device) {
+        throw new Error('Device not found');
+      }
+
+      const newBackup: Backup = {
+        id: `backup-${Date.now()}`,
+        deviceId,
+        deviceName: device.name,
+        timestamp: new Date().toISOString(),
+        size: 0,
+        status: 'in-progress',
+        location: 'local',
+        type: 'manual',
+        version: '1.0.0',
+        files: 0
+      };
+
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(newBackup), 500);
+      });
     }
 
-    const newBackup: Backup = {
-      id: `backup-${Date.now()}`,
-      deviceId,
-      deviceName: device.name,
-      timestamp: new Date().toISOString(),
-      size: 0,
-      status: 'in-progress',
-      location: 'local',
-      type: 'manual',
-      version: '1.0.0',
-      files: 0
-    };
-
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(newBackup), 500);
+    const response = await fetch(`${this.apiUrl}/devices/${deviceId}/backup`, {
+      method: 'POST',
     });
+    
+    if (!response.ok) {
+      throw new Error('Failed to start backup');
+    }
+    return response.json();
   }
 
   // Backups
   async getBackups(): Promise<Backup[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve([...mockBackups]), 500);
-    });
+    if (this.useMockData) {
+      return new Promise((resolve) => {
+        setTimeout(() => resolve([...mockBackups]), 500);
+      });
+    }
+
+    const response = await fetch(`${this.apiUrl}/backups`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch backups');
+    }
+    return response.json();
   }
 
   async getDeviceBackups(deviceId: string): Promise<Backup[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(mockBackups.filter(b => b.deviceId === deviceId)), 500);
-    });
+    if (this.useMockData) {
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(mockBackups.filter(b => b.deviceId === deviceId)), 500);
+      });
+    }
+
+    const response = await fetch(`${this.apiUrl}/devices/${deviceId}/backups`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch device backups');
+    }
+    return response.json();
   }
 
   async getBackup(id: string): Promise<Backup | undefined> {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(mockBackups.find(b => b.id === id)), 500);
-    });
+    if (this.useMockData) {
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(mockBackups.find(b => b.id === id)), 500);
+      });
+    }
+
+    const response = await fetch(`${this.apiUrl}/backups/${id}`);
+    if (!response.ok) {
+      if (response.status === 404) {
+        return undefined;
+      }
+      throw new Error('Failed to fetch backup');
+    }
+    return response.json();
   }
 
   async restoreBackup(backupId: string, deviceId?: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(true), 2000);
+    if (this.useMockData) {
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(true), 2000);
+      });
+    }
+
+    const response = await fetch(`${this.apiUrl}/backups/${backupId}/restore`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ deviceId }),
     });
+    
+    if (!response.ok) {
+      throw new Error('Failed to restore backup');
+    }
+    
+    const result = await response.json();
+    return result.success;
   }
 
   // Logs
   async getLogs(): Promise<BackupLog[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(mockLogs), 500);
-    });
+    if (this.useMockData) {
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(mockLogs), 500);
+      });
+    }
+
+    const response = await fetch(`${this.apiUrl}/logs`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch logs');
+    }
+    return response.json();
   }
 
   async getDeviceLogs(deviceId: string): Promise<BackupLog[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(mockLogs.filter(l => l.deviceId === deviceId)), 500);
-    });
+    if (this.useMockData) {
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(mockLogs.filter(l => l.deviceId === deviceId)), 500);
+      });
+    }
+
+    const response = await fetch(`${this.apiUrl}/devices/${deviceId}/logs`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch device logs');
+    }
+    return response.json();
   }
 
   async getBackupLogs(backupId: string): Promise<BackupLog[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(mockLogs.filter(l => l.backupId === backupId)), 500);
-    });
+    if (this.useMockData) {
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(mockLogs.filter(l => l.backupId === backupId)), 500);
+      });
+    }
+
+    const response = await fetch(`${this.apiUrl}/backups/${backupId}/logs`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch backup logs');
+    }
+    return response.json();
   }
 
   // Schedules
   async getSchedules(): Promise<BackupSchedule[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(mockSchedules), 500);
-    });
+    if (this.useMockData) {
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(mockSchedules), 500);
+      });
+    }
+
+    const response = await fetch(`${this.apiUrl}/schedules`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch schedules');
+    }
+    return response.json();
   }
 
   async getDeviceSchedule(deviceId: string): Promise<BackupSchedule | undefined> {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(mockSchedules.find(s => s.deviceId === deviceId)), 500);
-    });
+    if (this.useMockData) {
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(mockSchedules.find(s => s.deviceId === deviceId)), 500);
+      });
+    }
+
+    const response = await fetch(`${this.apiUrl}/devices/${deviceId}/schedule`);
+    if (!response.ok) {
+      if (response.status === 404) {
+        return undefined;
+      }
+      throw new Error('Failed to fetch device schedule');
+    }
+    return response.json();
   }
 
   async updateSchedule(schedule: BackupSchedule): Promise<BackupSchedule> {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(schedule), 500);
+    if (this.useMockData) {
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(schedule), 500);
+      });
+    }
+
+    const response = await fetch(`${this.apiUrl}/schedules`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(schedule),
     });
+    
+    if (!response.ok) {
+      throw new Error('Failed to update schedule');
+    }
+    return response.json();
   }
 
   // Server Status
   async getServerStatus(): Promise<ServerStatus> {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(mockServerStatus), 500);
-    });
+    if (this.useMockData) {
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(mockServerStatus), 500);
+      });
+    }
+
+    const response = await fetch(`${this.apiUrl}/server/status`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch server status');
+    }
+    return response.json();
   }
 }
 
